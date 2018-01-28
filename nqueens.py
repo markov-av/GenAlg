@@ -8,10 +8,11 @@ class Solver_8_queens:
     Dummy constructor representing proper interface
     '''
 
-    def __init__(self, pop_size=200, cross_prob=0.11, mut_prob=0.2):
+    def __init__(self, pop_size=50, cross_prob=0.85, mut_prob=0.15, min_fitness=1):
         self.pool_size = pop_size
         self.cross_prob = cross_prob
         self.mut_prob = mut_prob
+        self.min_fitness = min_fitness
 
     '''
     Dummy method representing proper interface
@@ -30,15 +31,17 @@ class Solver_8_queens:
             MainPool = self.selection(population=population)
             if len(MainPool) == 1:
                 break
-            pool = MainPool[:self.pool_size]
+            pool = MainPool
             epoch_num += 1
-            print(MainPool)
+        print(MainPool)
         visualization = self.visualization(MainPool[0])
+        best_fit = self.get_fit(MainPool[0])
         return best_fit, epoch_num, visualization
 
     def get_pool(self, pool_size):
         pool = []
         lst = [x for x in range(8)]
+        #lst = [0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7]
         for i in range(pool_size):
             np.random.shuffle(lst)
             pool.append([*lst])
@@ -46,37 +49,47 @@ class Solver_8_queens:
 
     def crossing(self, pool):
         general_population = []
+        best_fit_pop = []
+        sum_fit = 0
+        for j in range(len(pool)):
+            sum_fit += self.get_fit(pool[j])
+        probs = []
+        for jj in range(self.pool_size):
+            probs.append(self.get_fit(pool[jj])/sum_fit)
+        rulet = [probs[0]]
+        for i in range(1, len(probs)):
+            rulet.append(rulet[-1] + probs[i])
         for _ in range(self.pool_size):
-            a = random.randint(0, len(pool) - 1)
-            b = random.randint(0, len(pool) - 1)
-            pool_gen = []
-            for i in range(len(pool[a])):
-                ran_1 = random.randint(0, 100)
-                ran_2 = random.randint(0, 100)
-                if ran_1 >= ran_2:
-                    if pool[a][i] in pool_gen:
-                        j = pool[b][i]
-                    else:
-                        j = pool[a][i]
-                    pool_gen.append(j)
-                if ran_1 < ran_2:
-                    if pool[b][i] in pool_gen:
-                        j = pool[a][i]
-                    else:
-                        j = pool[b][i]
-                    pool_gen.append(j)
-                if len(pool_gen) == 8:
-                    general_population.append([*pool_gen])
+            k = random.random()
+            for i, value in enumerate(rulet):
+                if k < value:
+                    best_fit_pop.append(pool[i])
+                    break
+        for xX in range(0, len(best_fit_pop) - 1, 2):
+            k = random.randint(0, 8)
+            first, second = [], []
+            if random.random() < self.cross_prob:
+                for i in range(0, k):
+                    first.append(best_fit_pop[xX][i])
+                    second.append(best_fit_pop[xX + 1][i])
+                for j in range(k, 8):
+                    first.append(best_fit_pop[xX + 1][j])
+                    second.append(best_fit_pop[xX][j])
+                general_population.append([*first])
+                general_population.append([*second])
+            else:
+                general_population.append([*best_fit_pop[xX]])
+                general_population.append([*best_fit_pop[xX+1]])
         return general_population
 
     # Мутация
     def mutation(self, general_population):
+
         for i in range(len(general_population)):
             if random.random() < self.mut_prob:
-                general_population[i][random.randint(0, 7)] == random.randint(0, 7)
+                general_population[i][random.randint(0, 7)] = random.randint(0, 7)
         return general_population
 
-    # population = pool+general_population
     def get_fit(self, lst):
         k = 0
         for i in range(8):
@@ -85,38 +98,16 @@ class Solver_8_queens:
                     k += 1
         if len(lst) != len(set(lst)):
             k += 8 - len(set(lst))
+        return (1 - k / 28)
 
-        return (1 - k/8)
-
-    # TODO: нужно переписать селекцию, убрать ифы
     # Отбор
     def selection(self, population):
-        k = 0
-        pop_gen_pool = []
-        pop_gen_pool_high = []
-        pop_gen_pool_mid = []
-        pop_gen_pool_low = []
-        for lst in population:
-            for i in range(8):
-                for j in range(i + 1, 8):
-                    if abs(i - j) == abs(lst[i] - lst[j]):
-                        k += 1
-            if len(lst) != len(set(lst)):
-                k += 8 - len(set(lst))
-            if len(pop_gen_pool) + len(pop_gen_pool_high) + len(pop_gen_pool_mid) + len(
-                    pop_gen_pool_low) < self.pool_size:
-                if (1 - k / 8) == 1:
-                    pop_gen_pool.append(lst)
-                    return [lst]
-                if (1 - k / 8) < 1 and (1 - k / 8) >= 0.75:
-                    pop_gen_pool_high.append(lst)
-                if (1 - k / 8) < 0.75 and (1 - k / 8) >= 0.5:
-                    pop_gen_pool_mid.append(lst)
-                if (1 - k / 8) < 0.5:
-                    pop_gen_pool_low.append(lst)
-            k = 0
-        MainPool = pop_gen_pool + pop_gen_pool_high + pop_gen_pool_mid + pop_gen_pool_low
-        return MainPool
+        MainPool = sorted(population, key=self.get_fit, reverse=True)
+        if self.get_fit(MainPool[0]) == 1:
+            return [MainPool[0]]
+        if self.get_fit(MainPool[0]) > self.min_fitness:
+            return [MainPool[0]]
+        return MainPool[:self.pool_size]
 
     # TODO: переписать функцию, чтобы она не принтела результат, а возвращала строчку
     def visualization(self, lstMain):
