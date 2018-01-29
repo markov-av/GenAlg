@@ -8,7 +8,7 @@ class Solver_8_queens:
     Dummy constructor representing proper interface
     '''
 
-    def __init__(self, pop_size=40, cross_prob=0.85, mut_prob=0.25, min_fitness=1):
+    def __init__(self, pop_size=100, cross_prob=0.85, mut_prob=0.5, min_fitness=1):
         self.pool_size = pop_size
         self.cross_prob = cross_prob
         self.mut_prob = mut_prob
@@ -19,54 +19,53 @@ class Solver_8_queens:
     '''
 
     # TODO: добавить min_fitness
-    def solve(self, min_fitness=0.9, max_epochs=1000):
+    def solve(self, min_fitness=0.9, max_epochs=2500):
         best_fit = None
         epoch_num = None
         visualization = None
-        pool = self.get_pool(pool_size=self.pool_size)
+        population = self.get_pool(pool_size=self.pool_size)
         epoch_num = 0
         while epoch_num <= max_epochs:
-            general_population = self.mutation(self.crossing(self.chat_rullet(pool=pool)))
-            population = general_population + pool
-            MainPool = self.selection(population=population)
-            if len(MainPool) == 1:
+            spinogryzy = self.mutation(self.crossing(self.chat_rullet(population=population)))
+            top_population = self.reduce(population=spinogryzy + population)
+            if len(top_population) == 1:
                 break
-            pool = MainPool
+            population = top_population
             epoch_num += 1
-        visualization = self.visualization(MainPool[0])
-        best_fit = self.get_fit(MainPool[0])
+        visualization = self.visualization(top_population[0])
+        best_fit = self.get_fit(top_population[0])
         return best_fit, epoch_num, visualization
 
     def get_pool(self, pool_size):
-        pool = []
+        population = []
         lst = ['000', '001', '010', '011', '100', '101', '110', '111']
         for i in range(pool_size):
             np.random.shuffle(lst)
-            pool.append(''.join(lst))
-        return pool
+            population.append(''.join(lst))
+        return population
 
-    def crossing(self, pool):
-        general_population = []
-        for i in range(0, len(pool) - 1, 2):
+    def crossing(self, population):
+        crossing_population = []
+        for i in range(0, len(population) - 1, 2):
             k = random.randint(1, 23)
             if random.random() < self.cross_prob:
-                child_one = pool[i][:k] + pool[i + 1][k:]
-                child_two = pool[i + 1][:k] + pool[i][k:]
-                general_population.append(child_one)
-                general_population.append(child_two)
+                child_one = population[i][:k] + population[i + 1][k:]
+                child_two = population[i + 1][:k] + population[i][k:]
+                crossing_population.append(child_one)
+                crossing_population.append(child_two)
             else:
-                general_population.append(pool[i])
-                general_population.append(pool[i+1])
-        return general_population
+                crossing_population.append(population[i])
+                crossing_population.append(population[i+1])
+        return crossing_population
 
-    def chat_rullet(self, pool):
+    def chat_rullet(self, population):
         best_fit_pop = []
         sum_fit = 0
-        for j in range(len(pool)):
-            sum_fit += self.get_fit(pool[j])
+        for j in range(len(population)):
+            sum_fit += self.get_fit(population[j])
         probs = []
-        for jj in range(self.pool_size):
-            probs.append(self.get_fit(pool[jj]) / sum_fit)
+        for j in range(self.pool_size):
+            probs.append(self.get_fit(population[j]) / sum_fit)
         rulet = [probs[0]]
         for i in range(1, len(probs)):
             rulet.append(rulet[-1] + probs[i])
@@ -74,25 +73,24 @@ class Solver_8_queens:
             k = random.random()
             for i, value in enumerate(rulet):
                 if k < value:
-                    best_fit_pop.append(pool[i])
+                    best_fit_pop.append(population[i])
                     break
         return best_fit_pop
 
     # Мутация
-    def mutation(self, general_population):
-        for i in range(len(general_population)):
+    def mutation(self, population):
+        for i in range(len(population)):
             if random.random() < self.mut_prob:
-                k = random.randint(1, 23)
-                if general_population[i][k] == '0':
-                    general_population[i] = general_population[i][:k] + '1' + general_population[i][k + 1:]
+                k = random.randint(0, 23)
+                if population[i][k] == '0':
+                    population[i] = population[i][:k] + '1' + population[i][k + 1:]
                 else:
-                    general_population[i] = general_population[i][:k] + '0' + general_population[i][k + 1:]
-        return general_population
+                    population[i] = population[i][:k] + '0' + population[i][k + 1:]
+        return population
 
     def decoding(self, individ: str) -> list:
         lst = []
         for i in range(0, len(individ), 3):
-            #print(individ, individ[i: i + 3])
             lst.append(int(individ[i: i + 3], 2))
         return lst
 
@@ -109,19 +107,19 @@ class Solver_8_queens:
         # Число 28, максимально возможное количество конфликтов на доске
 
     # Отбор
-    def selection(self, population):
-        MainPool = sorted(population, key=self.get_fit, reverse=True)
-        if self.get_fit(MainPool[0]) == 1:
-            return [MainPool[0]]
-        if self.get_fit(MainPool[0]) > self.min_fitness:
-            return [MainPool[0]]
-        return MainPool[:self.pool_size]
+    def reduce(self, population):
+        sorted_population = sorted(population, key=self.get_fit, reverse=True)
+        if self.get_fit(sorted_population[0]) == 1:
+            return [sorted_population[0]]
+        if self.get_fit(sorted_population[0]) > self.min_fitness:
+            return [sorted_population[0]]
+        return sorted_population[:self.pool_size]
 
-    def visualization(self, lstMain):
+    def visualization(self, individ):
         visual = ''
-        lstMain = self.decoding(lstMain)
+        individ = self.decoding(individ)
         for p in range(8):
-            visual += lstMain[p] * ' * ' + ' Q ' + ' * ' * (7 - lstMain[p]) + '\n'
+            visual += individ[p] * ' * ' + ' Q ' + ' * ' * (7 - individ[p]) + '\n'
         return visual
 
 
