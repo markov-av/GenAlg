@@ -87,13 +87,13 @@ class Solver_8_queens:
                     population[i] = population[i][:k] + '0' + population[i][k + 1:]
         return population
 
-    def decoding(self, individ: str) -> list:
+    def decoding(self, individ):
         lst = []
         for i in range(0, len(individ), 3):
             lst.append(int(individ[i: i + 3], 2))
         return lst
 
-    def get_fit(self, lst: str):
+    def get_fit(self, lst):
         k = 0
         lst = self.decoding(lst)
         for i in range(8):
