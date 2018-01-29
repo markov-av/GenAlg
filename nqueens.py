@@ -8,7 +8,7 @@ class Solver_8_queens:
     Dummy constructor representing proper interface
     '''
 
-    def __init__(self, pop_size=50, cross_prob=0.85, mut_prob=0.15, min_fitness=1):
+    def __init__(self, pop_size=40, cross_prob=0.85, mut_prob=0.25, min_fitness=1):
         self.pool_size = pop_size
         self.cross_prob = cross_prob
         self.mut_prob = mut_prob
@@ -39,29 +39,24 @@ class Solver_8_queens:
 
     def get_pool(self, pool_size):
         pool = []
-        lst = [x for x in range(8)]
+        lst = ['000', '001', '010', '011', '100', '101', '110', '111']
         for i in range(pool_size):
             np.random.shuffle(lst)
-            pool.append([*lst])
+            pool.append(''.join(lst))
         return pool
 
     def crossing(self, pool):
         general_population = []
-        for xX in range(0, len(pool) - 1, 2):
-            k = random.randint(0, 8)
-            first, second = [], []
+        for i in range(0, len(pool) - 1, 2):
+            k = random.randint(1, 23)
             if random.random() < self.cross_prob:
-                for i in range(0, k):
-                    first.append(pool[xX][i])
-                    second.append(pool[xX + 1][i])
-                for j in range(k, 8):
-                    first.append(pool[xX + 1][j])
-                    second.append(pool[xX][j])
-                general_population.append([*first])
-                general_population.append([*second])
+                child_one = pool[i][:k] + pool[i + 1][k:]
+                child_two = pool[i + 1][:k] + pool[i][k:]
+                general_population.append(child_one)
+                general_population.append(child_two)
             else:
-                general_population.append([*pool[xX]])
-                general_population.append([*pool[xX+1]])
+                general_population.append(pool[i])
+                general_population.append(pool[i+1])
         return general_population
 
     def chat_rullet(self, pool):
@@ -85,14 +80,25 @@ class Solver_8_queens:
 
     # Мутация
     def mutation(self, general_population):
-
         for i in range(len(general_population)):
             if random.random() < self.mut_prob:
-                general_population[i][random.randint(0, 7)] = random.randint(0, 7)
+                k = random.randint(1, 23)
+                if general_population[i][k] == '0':
+                    general_population[i] = general_population[i][:k] + '1' + general_population[i][k + 1:]
+                else:
+                    general_population[i] = general_population[i][:k] + '0' + general_population[i][k + 1:]
         return general_population
 
-    def get_fit(self, lst):
+    def decoding(self, individ: str) -> list:
+        lst = []
+        for i in range(0, len(individ), 3):
+            #print(individ, individ[i: i + 3])
+            lst.append(int(individ[i: i + 3], 2))
+        return lst
+
+    def get_fit(self, lst: str):
         k = 0
+        lst = self.decoding(lst)
         for i in range(8):
             for j in range(i + 1, 8):
                 if abs(i - j) == abs(lst[i] - lst[j]):
@@ -111,9 +117,9 @@ class Solver_8_queens:
             return [MainPool[0]]
         return MainPool[:self.pool_size]
 
-
     def visualization(self, lstMain):
         visual = ''
+        lstMain = self.decoding(lstMain)
         for p in range(8):
             visual += lstMain[p] * ' * ' + ' Q ' + ' * ' * (7 - lstMain[p]) + '\n'
         return visual
