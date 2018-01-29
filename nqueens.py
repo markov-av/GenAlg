@@ -41,7 +41,6 @@ class Solver_8_queens:
     def get_pool(self, pool_size):
         pool = []
         lst = [x for x in range(8)]
-        #lst = [0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7]
         for i in range(pool_size):
             np.random.shuffle(lst)
             pool.append([*lst])
@@ -99,6 +98,7 @@ class Solver_8_queens:
         if len(lst) != len(set(lst)):
             k += 8 - len(set(lst))
         return (1 - k / 28)
+        # Число 28, максимально возможное количество конфликтов на доске
 
     # Отбор
     def selection(self, population):
@@ -109,7 +109,13 @@ class Solver_8_queens:
             return [MainPool[0]]
         return MainPool[:self.pool_size]
 
-    # TODO: переписать функцию, чтобы она не принтела результат, а возвращала строчку
+    # def binary_coding (self, population):
+    #     lst = {'0000': 0, '0001': 1, '0010': 2, '0011': 3, '0100': 4, '0101': 5, '0110': 6, '0111': 7}
+    #     for i in range(self.pool_size):
+    #         for j in range(8):
+    #             if population[i][j] in lst.keys():
+    #                 return lst.values()
+
     def visualization(self, lstMain):
         visual = ''
         for p in range(8):
