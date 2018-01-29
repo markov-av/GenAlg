@@ -27,13 +27,14 @@ class Solver_8_queens:
             top_population = self.reduce(population=spinogryzy + population)
             best_individ = max(top_population, key=self.get_fit)
             best_fit = self.get_fit(best_individ)
-            if min_fitness is not None and best_fit >= min_fitness:
+            if (min_fitness is not None and best_fit >= min_fitness) or \
+                    (max_epochs is not None and epoch_num >= max_epochs):
                 break
             population = top_population
             epoch_num += 1
-            print(population)
+            print(epoch_num)
         visualization = self.visualization(best_individ)
-        return best_fit, epoch_num, visualization
+        return best_fit, epoch_num, visualization, best_individ
 
     def get_pool(self, pool_size):
         population = []
