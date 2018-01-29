@@ -26,14 +26,13 @@ class Solver_8_queens:
         pool = self.get_pool(pool_size=self.pool_size)
         epoch_num = 0
         while epoch_num <= max_epochs:
-            general_population = self.mutation(self.crossing(pool=pool))
+            general_population = self.mutation(self.crossing(self.chat_rullet(pool=pool)))
             population = general_population + pool
             MainPool = self.selection(population=population)
             if len(MainPool) == 1:
                 break
             pool = MainPool
             epoch_num += 1
-        print(MainPool)
         visualization = self.visualization(MainPool[0])
         best_fit = self.get_fit(MainPool[0])
         return best_fit, epoch_num, visualization
@@ -48,13 +47,31 @@ class Solver_8_queens:
 
     def crossing(self, pool):
         general_population = []
+        for xX in range(0, len(pool) - 1, 2):
+            k = random.randint(0, 8)
+            first, second = [], []
+            if random.random() < self.cross_prob:
+                for i in range(0, k):
+                    first.append(pool[xX][i])
+                    second.append(pool[xX + 1][i])
+                for j in range(k, 8):
+                    first.append(pool[xX + 1][j])
+                    second.append(pool[xX][j])
+                general_population.append([*first])
+                general_population.append([*second])
+            else:
+                general_population.append([*pool[xX]])
+                general_population.append([*pool[xX+1]])
+        return general_population
+
+    def chat_rullet(self, pool):
         best_fit_pop = []
         sum_fit = 0
         for j in range(len(pool)):
             sum_fit += self.get_fit(pool[j])
         probs = []
         for jj in range(self.pool_size):
-            probs.append(self.get_fit(pool[jj])/sum_fit)
+            probs.append(self.get_fit(pool[jj]) / sum_fit)
         rulet = [probs[0]]
         for i in range(1, len(probs)):
             rulet.append(rulet[-1] + probs[i])
@@ -64,22 +81,7 @@ class Solver_8_queens:
                 if k < value:
                     best_fit_pop.append(pool[i])
                     break
-        for xX in range(0, len(best_fit_pop) - 1, 2):
-            k = random.randint(0, 8)
-            first, second = [], []
-            if random.random() < self.cross_prob:
-                for i in range(0, k):
-                    first.append(best_fit_pop[xX][i])
-                    second.append(best_fit_pop[xX + 1][i])
-                for j in range(k, 8):
-                    first.append(best_fit_pop[xX + 1][j])
-                    second.append(best_fit_pop[xX][j])
-                general_population.append([*first])
-                general_population.append([*second])
-            else:
-                general_population.append([*best_fit_pop[xX]])
-                general_population.append([*best_fit_pop[xX+1]])
-        return general_population
+        return best_fit_pop
 
     # Мутация
     def mutation(self, general_population):
@@ -109,12 +111,6 @@ class Solver_8_queens:
             return [MainPool[0]]
         return MainPool[:self.pool_size]
 
-    # def binary_coding (self, population):
-    #     lst = {'0000': 0, '0001': 1, '0010': 2, '0011': 3, '0100': 4, '0101': 5, '0110': 6, '0111': 7}
-    #     for i in range(self.pool_size):
-    #         for j in range(8):
-    #             if population[i][j] in lst.keys():
-    #                 return lst.values()
 
     def visualization(self, lstMain):
         visual = ''
