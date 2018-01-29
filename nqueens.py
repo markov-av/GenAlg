@@ -8,32 +8,31 @@ class Solver_8_queens:
     Dummy constructor representing proper interface
     '''
 
-    def __init__(self, pop_size=100, cross_prob=0.85, mut_prob=0.5, min_fitness=1):
+    def __init__(self, pop_size=100, cross_prob=0.85, mut_prob=0.5):
         self.pool_size = pop_size
         self.cross_prob = cross_prob
         self.mut_prob = mut_prob
-        self.min_fitness = min_fitness
 
     '''
     Dummy method representing proper interface
     '''
-
-    # TODO: добавить min_fitness
-    def solve(self, min_fitness=0.9, max_epochs=2500):
-        best_fit = None
-        epoch_num = None
-        visualization = None
+    def solve(self, min_fitness=1, max_epochs=1000):
         population = self.get_pool(pool_size=self.pool_size)
+        best_individ = max(population, key=self.get_fit)
+        best_fit = self.get_fit(best_individ)
         epoch_num = 0
-        while epoch_num <= max_epochs:
+        while (max_epochs is not None and epoch_num <= max_epochs) or \
+                (min_fitness is not None and best_fit <= min_fitness):
             spinogryzy = self.mutation(self.crossing(self.chat_rullet(population=population)))
             top_population = self.reduce(population=spinogryzy + population)
-            if len(top_population) == 1:
+            best_individ = max(top_population, key=self.get_fit)
+            best_fit = self.get_fit(best_individ)
+            if min_fitness is not None and best_fit >= min_fitness:
                 break
             population = top_population
             epoch_num += 1
-        visualization = self.visualization(top_population[0])
-        best_fit = self.get_fit(top_population[0])
+            print(population)
+        visualization = self.visualization(best_individ)
         return best_fit, epoch_num, visualization
 
     def get_pool(self, pool_size):
@@ -47,7 +46,7 @@ class Solver_8_queens:
     def crossing(self, population):
         crossing_population = []
         for i in range(0, len(population) - 1, 2):
-            k = random.randint(1, 23)
+            k = random.randint(1, 22)
             if random.random() < self.cross_prob:
                 child_one = population[i][:k] + population[i + 1][k:]
                 child_two = population[i + 1][:k] + population[i][k:]
@@ -109,10 +108,6 @@ class Solver_8_queens:
     # Отбор
     def reduce(self, population):
         sorted_population = sorted(population, key=self.get_fit, reverse=True)
-        if self.get_fit(sorted_population[0]) == 1:
-            return [sorted_population[0]]
-        if self.get_fit(sorted_population[0]) > self.min_fitness:
-            return [sorted_population[0]]
         return sorted_population[:self.pool_size]
 
     def visualization(self, individ):
@@ -121,11 +116,3 @@ class Solver_8_queens:
         for p in range(8):
             visual += individ[p] * ' * ' + ' Q ' + ' * ' * (7 - individ[p]) + '\n'
         return visual
-
-
-solver = Solver_8_queens()
-best_fit, epoch_num, visualization = solver.solve()
-print("Best solution:")
-print("Fitness:", best_fit)
-print("Iterations:", epoch_num)
-print(visualization)
