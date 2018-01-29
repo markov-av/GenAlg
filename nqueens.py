@@ -8,7 +8,7 @@ class Solver_8_queens:
     Dummy constructor representing proper interface
     '''
 
-    def __init__(self, pop_size=100, cross_prob=0.85, mut_prob=0.5):
+    def __init__(self, pop_size=100, cross_prob=0.85, mut_prob=1):
         self.pool_size = pop_size
         self.cross_prob = cross_prob
         self.mut_prob = mut_prob
@@ -32,9 +32,8 @@ class Solver_8_queens:
                 break
             population = top_population
             epoch_num += 1
-            print(epoch_num)
         visualization = self.visualization(best_individ)
-        return best_fit, epoch_num, visualization, best_individ
+        return best_fit, epoch_num, visualization
 
     def get_pool(self, pool_size):
         population = []
@@ -99,10 +98,8 @@ class Solver_8_queens:
         lst = self.decoding(lst)
         for i in range(8):
             for j in range(i + 1, 8):
-                if abs(i - j) == abs(lst[i] - lst[j]):
+                if abs(i - j) == abs(lst[i] - lst[j]) or lst[i] == lst[j]:
                     k += 1
-        if len(lst) != len(set(lst)):
-            k += 8 - len(set(lst))
         return (1 - k / 28)
         # Число 28, максимально возможное количество конфликтов на доске
 
